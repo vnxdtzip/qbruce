@@ -1,6 +1,6 @@
 {
   "name": "qbruce",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "qBruce — unified desktop control panel for Bruce ESP32 devices over USB serial.",
   "main": "electron/main.js",
   "author": "",
@@ -26,6 +26,7 @@
       "output": "dist"
     },
     "win": {
+      "icon": "build/icon.ico",
       "target": [
         { "target": "nsis", "arch": ["x64"] }
       ]
@@ -34,7 +35,10 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "qBruce"
+      "shortcutName": "qBruce",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
     },
     "linux": {
       "target": [
@@ -43,7 +47,7 @@
       ],
       "category": "Utility",
       "maintainer": "qBruce",
-      "icon": "src/assets/bruce-icon.png"
+      "icon": "build/icon.png"
     }
   }
 }

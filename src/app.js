@@ -12,6 +12,16 @@
     if (!(e.target.closest && e.target.closest('input, textarea, .term, #logPre, .out-box'))) e.preventDefault();
   });
 
+  /* App version from package.json (exposed by preload in Electron); the HTML
+     text is the fallback for a plain browser. */
+  (() => {
+    const v = window.appInfo && window.appInfo.version;
+    if (!v) return;
+    const tag = 'v' + v;
+    const a = $('#appVersion'); if (a) a.textContent = tag;
+    const b = $('#aboutVersion'); if (b) b.textContent = tag;
+  })();
+
   let renderer = null;
   let screenStreaming = false;
   let detectedDeviceName = '';   // from `info` Device field, used to auto-filter the store

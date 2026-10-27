@@ -20,7 +20,7 @@ function createWindow() {
     backgroundColor: '#090909',
     title: 'qBruce',
     autoHideMenuBar: true,
-    icon: path.join(__dirname, '..', 'src', 'assets', 'bruce-icon.png'),
+    icon: path.join(__dirname, '..', 'src', 'assets', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

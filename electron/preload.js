@@ -11,3 +11,8 @@ contextBridge.exposeInMainWorld('winControls', {
   minimize: () => ipcRenderer.send('win:minimize'),
   close: () => ipcRenderer.send('win:close'),
 });
+
+/* Single source of truth for the app version: package.json. */
+let pkgVersion = '';
+try { pkgVersion = require('../package.json').version; } catch {}
+contextBridge.exposeInMainWorld('appInfo', { version: pkgVersion });
