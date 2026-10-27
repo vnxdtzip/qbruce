@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>qBruce</title>
+  <link rel="icon" href="assets/bruce-icon.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Title bar -->
+    <div class="titlebar">
+      <div class="brand">
+        <div class="logo"><img src="assets/bruce-icon.png" alt="qBruce" /></div>
+        <div class="name"><span class="name-row">qBRUCE <b class="ver" id="appVersion">v1.0.0</b></span><small>UNIFIED CONTROL</small></div>
+      </div>
+      <div class="spacer"></div>
+      <div id="devChip" class="dev-chip"><svg class="usb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="6" height="7" rx="1.2"/><line x1="6.6" y1="4" x2="6.6" y2="5.6"/><line x1="9.4" y1="4" x2="9.4" y2="5.6"/><line x1="8" y1="9" x2="8" y2="14"/></svg><span id="devChipText">DISCONNECTED</span></div>
+      <button id="btnConnect" class="btn primary">CONNECT</button>
+      <button id="btnDisconnect" class="btn" style="display:none">DISCONNECT</button>
+      <div class="win-controls" id="winControls" style="display:none">
+        <button id="winMin" class="win-btn" title="Minimize"><svg viewBox="0 0 12 12" width="12" height="12"><line x1="2" y1="6.5" x2="10" y2="6.5" stroke="currentColor" stroke-width="1.6"/></svg></button>
+        <button id="winClose" class="win-btn close" title="Close"><svg viewBox="0 0 12 12" width="12" height="12"><line x1="2.5" y1="2.5" x2="9.5" y2="9.5" stroke="currentColor" stroke-width="1.6"/><line x1="9.5" y1="2.5" x2="2.5" y2="9.5" stroke="currentColor" stroke-width="1.6"/></svg></button>
+      </div>
+    </div>
+
+    <!-- Framed grid area -->
+    <div class="frame">
+      <!-- tabs -->
+      <div class="tabbar">
+        <div class="tab nav-item active" data-panel="dashboard"><span class="ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/></svg></span><span class="lbl">INFO</span></div>
+        <div class="tab nav-item" data-panel="screen"><span class="ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="2.5" y="3.5" width="15" height="10" rx="1.2"/><line x1="7" y1="17" x2="13" y2="17"/><line x1="10" y1="13.5" x2="10" y2="17"/></svg></span><span class="lbl">SCREEN</span></div>
+        <div class="tab nav-item" data-panel="terminal"><span class="ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 6 8 10 4 14"/><line x1="10.5" y1="14.5" x2="16" y2="14.5"/></svg></span><span class="lbl">CLI</span></div>
+        <div class="tab nav-item" data-panel="files"><span class="ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 5.5a1 1 0 0 1 1-1h3.4l1.3 1.6H16a1 1 0 0 1 1 1V15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg></span><span class="lbl">FILES</span></div>
+        <div class="tab nav-item" data-panel="store"><span class="ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 7h12l-1 9H5z"/><path d="M7 7a3 3 0 0 1 6 0"/></svg></span><span class="lbl">STORE</span></div>
+        <div class="tab nav-item" data-panel="scripts"><span class="ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 7 4 10 7 13"/><polyline points="13 7 16 10 13 13"/><line x1="11.5" y1="5" x2="8.5" y2="15"/></svg></span><span class="lbl">SCRIPTS</span></div>
+        <div class="tab nav-item" data-panel="help"><span class="ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="7.2"/><path d="M8 8a2 2 0 1 1 2.6 1.9c-.5.2-.8.6-.8 1.1v.5"/><circle cx="10" cy="14" r="0.6" fill="currentColor" stroke="none"/></svg></span><span class="lbl">HELP</span></div>
+      </div>
+
+      <div class="frame-body">
+        <div id="connectOverlay" class="overlay">
+          <div class="box">
+            <div class="logo-xl"><img src="assets/bruce-icon.png" alt="qBruce" /></div>
+            <h2>CONNECT YOUR BRUCE</h2>
+            <p>Plug the device over USB and connect. One serial link drives the info screen, display mirror, file manager, terminal and scripts.<br><br>Requires a Chromium browser (Chrome / Edge / Brave).</p>
+            <button class="btn primary" style="font-size:17px;padding:12px 26px" onclick="document.getElementById('btnConnect').click()">CONNECT OVER USB</button>
+          </div>
+        </div>
+
+        <!-- INFO / Dashboard -->
+        <section id="panel-dashboard" class="panel active">
+          <div class="home">
+            <div class="home-left">
+              <div class="dotbox"><div class="info-grid" id="infoCard"><div class="empty">Connect to load device info.</div></div></div>
+              <div class="grid cols-3" style="margin-top:16px">
+                <div class="stat"><div class="label">Heap used</div><div class="value" id="stHeap">—</div></div>
+                <div class="stat"><div class="label">SD card</div><div class="value" id="stSd">—</div></div>
+                <div class="stat"><div class="label">LittleFS</div><div class="value" id="stFs">—</div></div>
+              </div>
+              <div class="card" style="margin-top:16px"><h3>Resources</h3><div class="info-grid" id="resCard"><div class="empty">—</div></div></div>
+            </div>
+            <div class="home-right">
+              <div class="device-card">
+                <div class="device-name" id="deviceNameBig">BRUCE</div>
+                <div class="dc-status">
+                  <span class="conn-ind off" id="connBadge"><svg class="usb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="6" height="7" rx="1.2"/><line x1="6.6" y1="4" x2="6.6" y2="5.6"/><line x1="9.4" y1="4" x2="9.4" y2="5.6"/><line x1="8" y1="9" x2="8" y2="14"/></svg><span id="connText">DISCONNECTED</span></span>
+                  <span class="conn-path" id="connPath"></span>
+                </div>
+                <div class="device-stage">
+                  <img id="deviceImg" src="assets/bruce-device.png" alt="Bruce device" class="device-img" />
+                </div>
+                <button class="btn primary dc-cta" data-goto="screen">OPEN REMOTE SCREEN</button>
+                <div class="dc-actions">
+                  <button id="btnReboot" class="dc-act">REBOOT</button>
+                  <button id="btnRefreshDash" class="dc-act">REFRESH</button>
+                  <button id="btnFactory" class="dc-act danger">FACTORY RESET</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- REMOTE SCREEN -->
+        <section id="panel-screen" class="panel">
+          <div class="page-head"><div><h1>REMOTE SCREEN</h1><p>Live mirror of the device display — drive it like you're holding it.</p></div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span id="screenLive" class="badge-live" style="display:none">LIVE</span>
+              <button id="btnScreenStart" class="btn sm primary">START MIRROR</button>
+              <button id="btnScreenStop" class="btn sm" style="display:none">STOP</button>
+            </div></div>
+          <div class="screen-stage">
+            <div class="screen-col">
+              <div class="device-bezel">
+                <canvas id="navCanvas" width="240" height="135" style="display:none"></canvas>
+                <div id="screenEmpty" class="screen-empty">
+                  <svg class="se-ico" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="5" y="8" width="38" height="27" rx="3"/>
+                    <line x1="18" y1="41" x2="30" y2="41"/><line x1="24" y1="35" x2="24" y2="41"/>
+                    <path d="M19 17l6 4.5-6 4.5" opacity=".85"/>
+                  </svg>
+                  <div class="se-title">Screen mirror is off</div>
+                  <div class="se-sub">Hit <b>START MIRROR</b> to see your device's display here and drive it live.</div>
+                </div>
+              </div>
+              <div class="screen-toolbar">
+                <button id="btnScreenReload" class="btn sm">RELOAD</button>
+                <button id="btnSaveShot" class="btn sm">SAVE SCREENSHOT</button>
+              </div>
+            </div>
+            <div class="pad-col">
+              <div class="dpad-ring">
+                <button class="up" data-nav="up" title="Up">▲</button>
+                <button class="left" data-nav="prev" title="Left">◀</button>
+                <button class="ok" data-nav="sel" title="Select">OK</button>
+                <button class="right" data-nav="next" title="Right">▶</button>
+                <button class="down" data-nav="down" title="Down">▼</button>
+              </div>
+              <button class="dpad-back" data-nav="esc" title="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><polyline points="9 14 4 9 9 4"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg></button>
+              <div class="pad-aux">
+                <button class="btn sm" data-nav="sel 700">HOLD</button>
+                <button class="btn sm" data-nav="prevpage">PG UP</button>
+                <button class="btn sm" data-nav="nextpage">PG DN</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CLI / Terminal -->
+        <section id="panel-terminal" class="panel flexcol">
+          <div class="page-head"><div><h1>TERMINAL</h1><p>Raw Bruce CLI. Type a command, or <code>help</code>.</p></div>
+            <div style="display:flex;gap:8px"><button id="btnTermClear" class="btn sm">CLEAR</button><button id="btnTermHelp" class="btn sm">HELP</button></div></div>
+          <div class="term-wrap">
+            <div id="termView" class="term"></div>
+            <div class="term-input"><span class="prompt">></span><input id="termInput" type="text" spellcheck="false" autocomplete="off" placeholder="info · free · ls / · wifi on · rf scan ..." /></div>
+          </div>
+        </section>
+
+        <!-- FILES -->
+        <section id="panel-files" class="panel flexcol">
+          <div class="page-head"><div><h1>FILE MANAGER</h1><p>Browse SD / LittleFS — view, download, upload, rename and delete.</p></div>
+            <div style="display:flex;gap:8px">
+              <button id="btnFmUp" class="btn sm">UPLOAD</button>
+              <button id="btnFmMkdir" class="btn sm">NEW FOLDER</button>
+              <button id="btnFmRefresh" class="btn sm">REFRESH</button>
+            </div></div>
+          <div class="fm">
+            <div class="fm-bar">
+              <button id="btnFmBack" class="btn sm icon" title="Up one level">◀</button>
+              <div class="path-box">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" style="width:15px;height:15px;flex:none"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><path d="M6 2.5v3h4"/></svg>
+                <div class="breadcrumb" id="fmCrumb"></div>
+              </div>
+            </div>
+            <div class="file-grid" id="fmList"><div class="empty">Connect and refresh to list files.</div></div>
+          </div>
+          <input type="file" id="fmFileInput" style="display:none" />
+        </section>
+
+        <!-- STORE -->
+        <section id="panel-store" class="panel">
+          <div class="page-head">
+            <div><h1>APP STORE</h1><p>Install Bruce apps straight to your device.</p></div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <span style="font-size:12px;color:var(--text-faint);letter-spacing:.5px">DEVICE</span>
+              <select id="storeDevice" class="input" style="width:auto;min-width:180px"></select>
+              <button id="btnStoreRefresh" class="btn sm">REFRESH</button>
+            </div>
+          </div>
+          <div id="storeMsg" class="empty" style="display:none"></div>
+          <div id="storeTools" style="display:none">
+            <div class="store-cats" id="storeCats"></div>
+            <input id="storeSearch" class="input" placeholder="Search apps, authors..." style="margin:14px 0 18px;max-width:360px" />
+          </div>
+          <div class="store-grid" id="storeGrid"></div>
+        </section>
+
+        <!-- SCRIPTS -->
+        <section id="panel-scripts" class="panel flexcol">
+          <div class="page-head"><div><h1>SCRIPTS</h1><p>Run Bruce JavaScript on the device.</p></div>
+            <div style="display:flex;gap:8px"><button id="btnScriptRun" class="btn sm primary">RUN ON DEVICE</button><button id="btnScriptClear" class="btn sm">CLEAR</button></div></div>
+          <textarea id="scriptBox" class="input" style="min-height:200px" spellcheck="false" placeholder="// Bruce JS
+var nets = wifi.scan();
+for (var i=0; i&lt;nets.length; i++) println(nets[i].SSID + '  ' + nets[i].RSSI);
+"></textarea>
+          <div class="out-box" id="scriptOut" style="flex:1;margin-top:12px">Output will appear here.</div>
+        </section>
+
+        <!-- ABOUT -->
+        <section id="panel-help" class="panel">
+          <div class="page-head"><div><h1>ABOUT</h1><p>Unified desktop control for Bruce devices.</p></div></div>
+          <div class="about">
+            <div class="about-logo"><img src="assets/bruce-icon.png" alt="qBruce" /></div>
+            <div class="about-name">qBRUCE</div>
+            <div class="about-ver" id="aboutVersion">v1.0.0</div>
+            <div class="about-links">
+              <a class="about-link" href="https://bruce.computer" target="_blank" rel="noopener">
+                <span class="al-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18" stroke-linecap="round"/><path d="M12 3c2.8 2.6 2.8 15.4 0 18M12 3c-2.8 2.6-2.8 15.4 0 18" stroke-linecap="round"/></svg></span>
+                <span class="al-txt"><b>Bruce — official website</b><span>bruce.computer</span></span>
+                <span class="al-arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l5 5-5 5"/></svg></span>
+              </a>
+              <a class="about-link" href="https://github.com/BruceDevices/firmware" target="_blank" rel="noopener">
+                <span class="al-ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.17 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.25 2.87.12 3.17.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.49 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.82.58A12 12 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z"/></svg></span>
+                <span class="al-txt"><b>Bruce — firmware on GitHub</b><span>github.com/BruceDevices/firmware</span></span>
+                <span class="al-arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l5 5-5 5"/></svg></span>
+              </a>
+              <a class="about-link" href="https://github.com/vnxdtzip/qbruce" target="_blank" rel="noopener">
+                <span class="al-ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.17 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.25 2.87.12 3.17.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.49 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.82.58A12 12 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z"/></svg></span>
+                <span class="al-txt"><b>qBruce — on GitHub</b><span>github.com/vnxdtzip/qbruce</span></span>
+                <span class="al-arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l5 5-5 5"/></svg></span>
+              </a>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- log drawer + bottom bar -->
+      <div class="logdrawer" id="logDrawer"><pre id="logPre"></pre></div>
+      <div class="logbar">
+        <button id="btnLogs" class="logs-btn">▾ LOGS</button>
+        <div class="status" id="statusMsg"><span class="si">i</span> READY.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Install progress -->
+  <div id="installOverlay" class="overlay" style="display:none">
+    <div class="box" style="max-width:440px;text-align:left">
+      <h2 id="installTitle" style="text-align:center">Installing</h2>
+      <p id="installMsg" style="text-align:center;min-height:20px">Preparing...</p>
+      <div class="store-progress">
+        <span class="pp bright" id="installPct">0%</span>
+        <i id="installBar"><span class="pp dark" id="installPctDark">0%</span></i>
+      </div>
+      <div style="margin-top:20px;display:flex;justify-content:center"><button id="installClose" class="btn" style="display:none">CLOSE</button></div>
+    </div>
+  </div>
+
+  <!-- Themed dialog (replaces native confirm / prompt / alert) -->
+  <div id="uiDialog" class="overlay" style="display:none;z-index:120">
+    <div class="box" style="max-width:420px;text-align:left">
+      <h2 id="uiDlgTitle" style="text-align:center">Confirm</h2>
+      <p id="uiDlgMsg" class="dlg-msg" style="text-align:center"></p>
+      <input id="uiDlgInput" class="input" style="display:none" spellcheck="false" />
+      <div style="display:flex;justify-content:center;gap:10px;margin-top:20px">
+        <button id="uiDlgCancel" class="btn">CANCEL</button>
+        <button id="uiDlgOk" class="btn primary">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Electron serial-port picker (unused in the browser build) -->
+  <div id="portOverlay" class="overlay" style="display:none">
+    <div class="box" style="max-width:480px;text-align:left">
+      <h2 style="text-align:center">SELECT DEVICE</h2>
+      <p style="text-align:center">Choose the serial port for your Bruce device.</p>
+      <div id="portList" class="menu-list" style="margin-bottom:18px;max-height:none"></div>
+      <div style="display:flex;justify-content:center;gap:10px"><button id="portCancel" class="btn">CANCEL</button></div>
+    </div>
+  </div>
+
+  <div class="toast-wrap" id="toasts"></div>
+
+  <script src="vendor/jszip.min.js"></script>
+  <script src="serial.js"></script>
+  <script src="screen.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
