@@ -18,7 +18,7 @@ Connect your Bruce device over USB and manage everything from one clean, retro i
 
 ## What is it?
 
-qBruce is a single app that brings your Bruce device's tools together in one place, with no reconnecting and no juggling windows. Plug in over USB, hit **Connect**, and you get the device info, a live mirror of its screen, a file manager, the app store and more, all in one window.
+qBruce is a single app that brings your Bruce device's tools together in one place, with no reconnecting and no juggling windows. Plug in over USB, hit **Connect**, and you get the device info, a live mirror of its screen, a file manager and the app store, all in one window.
 
 It talks to the device over a single USB serial connection, so everything just works side by side.
 
@@ -31,7 +31,7 @@ It talks to the device over a single USB serial connection, so everything just w
 - **Terminal**: the full device command line, with history and colored output.
 - **File Manager**: browse, view, download, rename, delete and upload files on the device, and run `.js` scripts straight from the list.
 - **App Store**: browse the official Bruce app store, auto-filtered for your connected device, and install apps (or download the `.zip`) in one click.
-- **Scripts**: paste and run Bruce JavaScript on the device.
+- **Update check**: on launch qBruce checks GitHub for a newer release and offers the download.
 
 ---
 

@@ -9,7 +9,7 @@
      everywhere except real text areas (where copy/paste is still handy). */
   document.addEventListener('dragstart', e => e.preventDefault());
   document.addEventListener('contextmenu', e => {
-    if (!(e.target.closest && e.target.closest('input, textarea, .term, #logPre, .out-box'))) e.preventDefault();
+    if (!(e.target.closest && e.target.closest('input, textarea, .term, #logPre'))) e.preventDefault();
   });
 
   /* App version from package.json (exposed by preload in Electron); the HTML
@@ -421,7 +421,7 @@
       cwd = normalize(path);
       list.innerHTML = '<div class="empty"><span class="spinner"></span> listing…</div>';
       renderCrumb();
-      const txt = await S.sendCommand('ls ' + cwd, { silence: 600, timeout: 8000 });
+      const txt = await S.sendCommand('ls ' + q(cwd), { silence: 600, timeout: 8000 });
       const entries = parseLs(txt);
       renderList(entries);
     }
@@ -473,25 +473,26 @@
       const path = join(cwd, name);
       if (act === 'delete') {
         if (!(await uiConfirm(`Delete ${isDir ? 'folder' : 'file'} "${name}"?`, 'Delete', true))) return;
-        const cmd = isDir ? 'storage rmdir ' + path : 'rm ' + path;
+        const cmd = isDir ? 'storage rmdir ' + q(path) : 'rm ' + q(path);
         const r = await S.sendCommand(cmd, { silence: 500 });
         toast(/removed/i.test(r) ? 'Deleted' : 'Delete: ' + oneLine(r), /removed/i.test(r) ? 'ok' : 'err');
         ls(cwd);
       } else if (act === 'rename') {
         const nn = await uiPrompt('New name:', name, 'Rename'); if (!nn) return;
-        const r = await S.sendCommand(`storage rename ${path} ${nn}`, { silence: 500 });
+        // the firmware treats newName as a full path (bare names land in /), so keep it in this folder
+        const r = await S.sendCommand(`storage rename ${q(path)} ${q(join(cwd, nn))}`, { silence: 500 });
         toast(oneLine(r) || 'Renamed', 'ok'); ls(cwd);
       } else if (act === 'view') {
-        const txt = await S.sendCommand('cat ' + path, { silence: 700, timeout: 10000 });
+        const txt = await S.sendCommand('cat ' + q(path), { silence: 700, timeout: 10000 });
         showViewer(name, stripNoise(txt));
       } else if (act === 'download') {
-        const txt = await S.sendCommand('cat ' + path, { silence: 700, timeout: 15000 });
+        const txt = await S.sendCommand('cat ' + q(path), { silence: 700, timeout: 15000 });
         const blob = new Blob([stripNoise(txt)], { type: 'application/octet-stream' });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
         toast('Downloaded ' + name, 'ok');
       } else if (act === 'run') {
         if (screenStreaming) await stopScreen();
-        await S.writeLine('js run_from_file ' + path);
+        await S.writeLine('js run_from_file ' + q(path));
         toast('Running ' + name + ' on device', 'ok');
       }
     }
@@ -503,7 +504,7 @@
       try {
         if (isText) {
           const text = new TextDecoder().decode(buf);
-          await S.sendCommand(`storage write ${path} ${buf.length}`, { silence: 400, timeout: 3000 });
+          await S.sendCommand(`storage write ${q(path)} ${buf.length}`, { silence: 400, timeout: 3000 });
           for (const line of text.split('\n')) await S._write(line + '\n');
           await S._write('EOF\n');
           await sleep(400);
@@ -520,7 +521,7 @@
     $('#btnFmBack').addEventListener('click', () => ls(parent(cwd)));
     $('#btnFmMkdir').addEventListener('click', async () => {
       const name = await uiPrompt('New folder name:', '', 'New folder'); if (!name) return;
-      const r = await S.sendCommand('storage mkdir ' + join(cwd, name), { silence: 500 });
+      const r = await S.sendCommand('storage mkdir ' + q(join(cwd, name)), { silence: 500 });
       toast(oneLine(r) || 'Created', 'ok'); ls(cwd);
     });
     $('#btnFmUp').addEventListener('click', () => $('#fmFileInput').click());
@@ -534,25 +535,6 @@
     if (w) { w.document.title = name; w.document.body.style.cssText = 'background:#0b0b10;color:#eee;font:13px/1.6 monospace;padding:20px;white-space:pre-wrap;word-break:break-word'; w.document.body.textContent = text; }
     else uiAlert(text.slice(0, 4000), name);
   }
-
-  /* ================= SCRIPTS ================= */
-  $('#btnScriptRun').addEventListener('click', async () => {
-    if (!S.connected) { toast('Connect first', 'err'); return; }
-    const code = $('#scriptBox').value;
-    if (!code.trim()) return;
-    const out = $('#scriptOut'); out.textContent = 'Running…\n';
-    const off = (text) => { out.textContent += text; out.scrollTop = out.scrollHeight; };
-    S.subText(off);
-    try {
-      await S.sendCommand(`js run_from_buffer ${code.length}`, { silence: 400, timeout: 3000 });
-      for (const line of code.split('\n')) await S._write(line + '\n');
-      await S._write('EOF\n');
-      await sleep(1500);
-      toast('Script sent', 'ok');
-    } catch (e) { off('\nError: ' + e.message); }
-    setTimeout(() => { S.onText = S.onText.filter(f => f !== off); }, 4000);
-  });
-  $('#btnScriptClear').addEventListener('click', () => { $('#scriptBox').value = ''; $('#scriptOut').textContent = 'Output will appear here.'; });
 
   /* ================= APP STORE =================
    * Data from the official Bruce App-Store (brucedevices.github.io/App-Store-Data).
@@ -694,7 +676,7 @@
   async function ensureDirs(destPath) {
     const parts = destPath.split('/').filter(Boolean); parts.pop(); // drop filename
     let cur = '';
-    for (const p of parts) { cur += '/' + p; await S.sendCommand(`storage mkdir "${cur}"`, { silence: 350, timeout: 3000 }); }
+    for (const p of parts) { cur += '/' + p; await S.sendCommand(`storage mkdir ${q(cur)}`, { silence: 350, timeout: 3000 }); }
   }
   async function installStoreApp(app) {
     if (!S.connected) { toast('Connect the device first', 'err'); return; }
@@ -734,7 +716,40 @@
   let storeInit = false;
   $$('.nav-item').forEach(it => it.addEventListener('click', () => { if (it.dataset.panel === 'store' && !storeInit) { storeInit = true; loadStore(); } }));
 
+  /* ================= UPDATE CHECK =================
+   * On launch, ask GitHub for the latest qBruce release and offer the download
+   * when it's newer than this build. Silent on any failure (offline, rate limit). */
+  const RELEASES_API = 'https://api.github.com/repos/vnxdtzip/qbruce/releases/latest';
+  const RELEASES_PAGE = 'https://github.com/vnxdtzip/qbruce/releases/latest';
+  function versionParts(v) { return String(v).trim().replace(/^v/i, '').split(/[-+]/)[0].split('.').map(n => parseInt(n, 10) || 0); }
+  function isNewer(latest, current) {
+    const a = versionParts(latest), b = versionParts(current);
+    for (let i = 0; i < Math.max(a.length, b.length); i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0);
+    return false;
+  }
+  async function checkForUpdate() {
+    const current = (window.appInfo && window.appInfo.version) || $('#appVersion').textContent;
+    let rel;
+    try {
+      const r = await fetch(RELEASES_API, { headers: { Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(10000) });
+      if (!r.ok) return;
+      rel = await r.json();
+    } catch { return; }
+    if (!rel || !rel.tag_name || !isNewer(rel.tag_name, current)) return;
+    while ($('#uiDialog').style.display !== 'none') await sleep(1000);   // don't hijack a dialog the user is in
+    const go = await uiDialog({
+      title: 'Update available',
+      message: `qBruce v${versionParts(rel.tag_name).join('.')} is out (you have v${versionParts(current).join('.')}). Download the new version from GitHub?`,
+      okText: 'DOWNLOAD', cancelText: 'LATER',
+    });
+    if (go) window.open(rel.html_url || RELEASES_PAGE, '_blank');   // Electron hands this to the default browser
+  }
+  setTimeout(checkForUpdate, 1500);
+
   /* ================= helpers ================= */
+  // SimpleCLI splits arguments on spaces, so quote every path (escaping \ and ")
+  // or "DTMF Tones.js" reaches the firmware as two arguments.
+  function q(p) { return '"' + String(p).replace(/[\\"]/g, '\\$&') + '"'; }
   function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
   function oneLine(s) { return (s || '').split('\n').map(x => x.trim()).filter(Boolean).pop() || ''; }
   function stripNoise(txt) {
