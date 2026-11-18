@@ -214,7 +214,11 @@
         history.unshift(cmd); hIdx = -1; input.value = '';
         if (!S.connected) { toast('Not connected', 'err'); return; }
         append('l-cmd', cmd);
-        try { await S.sendCommand(cmd); } catch (err) { append('l-err', String(err)); }
+        try {
+          const out = await S.sendCommand(cmd);
+          const rd = cmd.match(/^(?:storage\s+)?rmdir\s+(.+)$/i);
+          if (rd && /Error removing directory/i.test(out)) await offerRmTree(normalize(unquote(rd[1])));
+        } catch (err) { append('l-err', String(err)); }
       } else if (e.key === 'ArrowUp') {
         if (hIdx < history.length - 1) { hIdx++; input.value = history[hIdx]; }
         e.preventDefault();
@@ -223,6 +227,19 @@
         e.preventDefault();
       }
     });
+    // The firmware's rmdir only removes empty folders; offer the recursive delete the File Manager uses.
+    async function offerRmTree(path) {
+      if (path === '/') return;
+      const ok = await uiConfirm(`"${path}" is not empty, and the device's rmdir only removes empty folders. Delete it and everything in it?`, 'Folder not empty', true);
+      if (!ok) return;
+      append('l-sys', `— deleting ${path} and its contents —`);
+      try {
+        await FM.rmTree(path);
+        append('l-ok', `— removed ${path} —`);
+        toast('Deleted', 'ok');
+        if (FM.cwd() === parent(path)) FM.ls(FM.cwd());
+      } catch (err) { append('l-err', 'Delete failed: ' + err.message); }
+    }
     $('#btnTermClear').addEventListener('click', () => view.innerHTML = '');
     $('#btnTermHelp').addEventListener('click', () => { if (S.connected) { append('l-cmd', 'help'); S.sendCommand('help'); } });
 
@@ -472,10 +489,13 @@
     async function fileAction(act, name, isDir) {
       const path = join(cwd, name);
       if (act === 'delete') {
-        if (!(await uiConfirm(`Delete ${isDir ? 'folder' : 'file'} "${name}"?`, 'Delete', true))) return;
-        const cmd = isDir ? 'storage rmdir ' + q(path) : 'rm ' + q(path);
-        const r = await S.sendCommand(cmd, { silence: 500 });
-        toast(/removed/i.test(r) ? 'Deleted' : 'Delete: ' + oneLine(r), /removed/i.test(r) ? 'ok' : 'err');
+        const what = isDir ? `folder "${name}" and everything in it` : `file "${name}"`;
+        if (!(await uiConfirm(`Delete ${what}?`, 'Delete', true))) return;
+        try {
+          if (isDir) { toast('Deleting ' + name + '…'); await rmTree(path); }
+          else await rmFile(path);
+          toast('Deleted', 'ok');
+        } catch (e) { toast('Delete: ' + e.message, 'err', 5000); }
         ls(cwd);
       } else if (act === 'rename') {
         const nn = await uiPrompt('New name:', name, 'Rename'); if (!nn) return;
@@ -495,6 +515,24 @@
         await S.writeLine('js run_from_file ' + q(path));
         toast('Running ' + name + ' on device', 'ok');
       }
+    }
+    async function rmFile(path) {
+      const r = await S.sendCommand('rm ' + q(path), { silence: 500 });
+      if (!/removed/i.test(r)) throw new Error(oneLine(r) || 'no reply from device');
+    }
+    // The firmware's rmdir is a bare fs.rmdir(), which refuses non-empty folders
+    // ("Error removing directory"), so empty the tree bottom-up first.
+    async function rmTree(path, depth = 0) {
+      if (depth > 16) throw new Error('folders nested too deep');
+      const entries = parseLs(await S.sendCommand('ls ' + q(path), { silence: 600, timeout: 8000 }));
+      for (const e of entries) {
+        if (e.name === '.' || e.name === '..') continue;
+        const p = join(path, e.name);
+        if (e.dir) await rmTree(p, depth + 1);
+        else await rmFile(p);
+      }
+      const r = await S.sendCommand('storage rmdir ' + q(path), { silence: 500 });
+      if (!/removed/i.test(r)) throw new Error(oneLine(r) || 'no reply from device');
     }
     async function upload(file) {
       const buf = new Uint8Array(await file.arrayBuffer());
@@ -527,7 +565,7 @@
     $('#btnFmUp').addEventListener('click', () => $('#fmFileInput').click());
     $('#fmFileInput').addEventListener('change', e => { if (e.target.files[0]) upload(e.target.files[0]); e.target.value = ''; });
 
-    return { ls, cwd: () => cwd };
+    return { ls, rmTree, cwd: () => cwd };
   })();
 
   function showViewer(name, text) {
@@ -755,6 +793,8 @@
   function stripNoise(txt) {
     return txt.split('\n').filter(l => { const t = l.trim(); return !(t.startsWith('COMMAND:') || t.startsWith('[CLI] Result:') || t === '#'); }).join('\n').replace(/\n#\s*$/, '').trim();
   }
+  // undo q(): SimpleCLI takes "quoted args" with \" and \\ escapes
+  function unquote(s) { s = s.trim(); return /^".*"$/.test(s) ? s.slice(1, -1).replace(/\\(.)/g, '$1') : s; }
   function normalize(p) { p = ('/' + p).replace(/\/+/g, '/'); return p.length > 1 ? p.replace(/\/$/, '') : '/'; }
   function join(base, name) { return normalize(base + '/' + name); }
   function parent(p) { return normalize(p.split('/').slice(0, -1).join('/') || '/'); }
