@@ -2,7 +2,7 @@
 
 <img src="src/assets/bruce-icon.png" width="130" alt="qBruce" />
 
-# qBruce v1.0.2
+# qBruce v1.0.3
 
 **A desktop control panel for [Bruce](https://bruce.computer) devices, in the spirit of qFlipper.**
 
